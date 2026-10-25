@@ -1,14 +1,9 @@
 ---
-tags:
-  - 复变函数/第2章
-aliases:
-  - 极坐标 C-R 方程
-  - 极坐标下的柯西-黎曼方程
-dg-publish: true
-permalink: "/复变函数/概念/极坐标形式的C-R方程/"
+{"dg-publish":true,"permalink":"/复变函数/概念/极坐标形式的C-R方程/","tags":["复变函数/第2章"],"dg-note-properties":{"tags":["复变函数/第2章"],"aliases":["极坐标 C-R 方程","极坐标下的柯西-黎曼方程"]}}
 ---
 
-许多函数写成极坐标 $z = r e^{\mathrm{i}\theta}$ 后形式最简，例如 $\ln\left|z\right|$、$\arg z$、$z^{n}$。此时若先转回直角坐标再套 [C-R方程](C-R方程.md)，展开计算会很繁琐；把 C-R 方程本身用 $(r,\theta)$ 写出，就能直接在极坐标下判断[解析](解析.md)性。
+
+许多函数写成极坐标 $z = r e^{\mathrm{i}\theta}$ 后形式最简，例如 $\ln\left|z\right|$、$\arg z$、$z^{n}$。此时若先转回直角坐标再套 [[复变函数/概念/C-R方程\|C-R方程]]，展开计算会很繁琐；把 C-R 方程本身用 $(r,\theta)$ 写出，就能直接在极坐标下判断[[复变函数/概念/解析\|解析]]性。
 
 ## 极坐标下的 C-R 方程
 
@@ -44,13 +39,13 @@ $$
 u_{r} = n r^{n-1}\cos n\theta = \frac{1}{r}v_{\theta},\qquad
 v_{r} = n r^{n-1}\sin n\theta = -\frac{1}{r}u_{\theta}
 $$
-两条方程在不含原点的区域上处处成立（$n \geq 1$ 时在整个 $\mathbf{C}$ 上成立），故 $z^{n}$ 解析，且 $f^{\prime}(z) = e^{-\mathrm{i}\theta}\cdot n r^{n-1}e^{\mathrm{i}n\theta} = n z^{n-1}$，与 [幂函数](幂函数.md) 的结论一致。
+两条方程在不含原点的区域上处处成立（$n \geq 1$ 时在整个 $\mathbf{C}$ 上成立），故 $z^{n}$ 解析，且 $f^{\prime}(z) = e^{-\mathrm{i}\theta}\cdot n r^{n-1}e^{\mathrm{i}n\theta} = n z^{n-1}$，与 [[复变函数/概念/幂函数\|幂函数]] 的结论一致。
 
 > [!tip] 判据选择
-> 实部虚部含 $\left|z\right|$、$\arg z$ 或写成 $r^{n}\cos n\theta$ 形式时优先用极坐标形式；含 $x, y$ 的多项式时用直角坐标的 [C-R方程](C-R方程.md) 更快。两者是同一组条件的两种写法，结论必须一致。
+> 实部虚部含 $\left|z\right|$、$\arg z$ 或写成 $r^{n}\cos n\theta$ 形式时优先用极坐标形式；含 $x, y$ 的多项式时用直角坐标的 [[复变函数/概念/C-R方程\|C-R方程]] 更快。两者是同一组条件的两种写法，结论必须一致。
 
 ## 例题
 
-见 [解析性与C-R方程](../例题/解析性与C-R方程.md#极坐标形式的C-R方程)。
+见 [[复变函数/例题/解析性与C-R方程#极坐标形式的C-R方程\|解析性与C-R方程#极坐标形式的C-R方程]]。
 
 > 教材 §22

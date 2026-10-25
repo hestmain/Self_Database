@@ -1,15 +1,9 @@
 ---
-tags:
-  - 复变函数/第2章
-aliases:
-  - 柯西-黎曼方程
-  - Cauchy-Riemann 方程
-  - CR 方程
-dg-publish: true
-permalink: "/复变函数/概念/C-R方程/"
+{"dg-publish":true,"permalink":"/复变函数/概念/C-R方程/","tags":["复变函数/第2章"],"dg-note-properties":{"tags":["复变函数/第2章"],"aliases":["柯西-黎曼方程","Cauchy-Riemann 方程","CR 方程"]}}
 ---
 
-若复变函数 $f(z) = u(x,y) + \mathrm{i}v(x,y)$ 在 $z_0$ 处[可微](微分.md)，则其实部与虚部并不独立：在 $(x_0,y_0)$ 处必须满足 C-R（Cauchy–Riemann）方程
+
+若复变函数 $f(z) = u(x,y) + \mathrm{i}v(x,y)$ 在 $z_0$ 处[[复变函数/概念/微分\|可微]]，则其实部与虚部并不独立：在 $(x_0,y_0)$ 处必须满足 C-R（Cauchy–Riemann）方程
 $$
 \frac{\partial u}{\partial x} = \frac{\partial v}{\partial y},
 \qquad
@@ -39,7 +33,7 @@ $$
 $$
 u_{r} = \frac{1}{r}v_{\theta},\qquad v_{r} = -\frac{1}{r}u_{\theta},\qquad f^{\prime}(z) = e^{-\mathrm{i}\theta}\left(u_{r} + \mathrm{i}v_{r}\right)
 $$
-推导与用法见 [极坐标形式的C-R方程](极坐标形式的C-R方程.md)。
+推导与用法见 [[复变函数/概念/极坐标形式的C-R方程\|极坐标形式的C-R方程]]。
 
 ## 几何意义
 
