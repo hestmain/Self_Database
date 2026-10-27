@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { isTransformableImage, isDecodableImage } from "./imageFormat.js";
+import {
+	isTransformableImage,
+	isDecodableImage,
+	isGifReference,
+	shouldKeepGifOriginal,
+} from "./imageFormat.js";
 
 const writeTemp = (name, bytes) => {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "img-format-"));
@@ -10,6 +15,16 @@ const writeTemp = (name, bytes) => {
 	fs.writeFileSync(file, Buffer.from(bytes));
 	return file;
 };
+
+// A real, decodable 1x1 GIF89a — not just a magic-byte stub.
+const REAL_GIF = Buffer.from(
+	"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+	"base64",
+);
+const REAL_PNG = Buffer.from(
+	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+	"base64",
+);
 
 describe("isTransformableImage", () => {
 	it("accepts a JPEG regardless of extension", () => {
@@ -95,5 +110,84 @@ describe("isDecodableImage", () => {
 		await expect(isDecodableImage("/nonexistent/img.jpg")).resolves.toBe(
 			false,
 		);
+	});
+});
+
+describe("isGifReference", () => {
+	it("accepts a plain .gif path", () => {
+		expect(isGifReference("/img/wave.gif")).toBe(true);
+	});
+
+	it("is case-insensitive", () => {
+		for (const ref of ["/img/wave.GIF", "/img/Wave.Gif", "/img/wave.gIf"]) {
+			expect(isGifReference(ref)).toBe(true);
+		}
+	});
+
+	it("ignores query strings and fragments", () => {
+		expect(isGifReference("/img/wave.gif?raw=1")).toBe(true);
+		expect(isGifReference("/img/wave.gif#top")).toBe(true);
+		expect(isGifReference("/img/wave.gif?v=2&x=1#top")).toBe(true);
+	});
+
+	it("does not treat a .gif inside the query string as the format", () => {
+		expect(isGifReference("/img/photo.jpg?fallback=wave.gif")).toBe(false);
+		expect(isGifReference("/img/photo.jpg#wave.gif")).toBe(false);
+	});
+
+	it("rejects other image formats", () => {
+		for (const ref of [
+			"/img/photo.webp",
+			"/img/photo.jpeg",
+			"/img/photo.jpg",
+			"/img/photo.png",
+			"/img/icon.svg",
+			"/img/gif",
+			"/img/wave.gif.jpg",
+			"",
+			undefined,
+			null,
+		]) {
+			expect(isGifReference(ref)).toBe(false);
+		}
+	});
+});
+
+describe("shouldKeepGifOriginal", () => {
+	it("keeps a GIF original instead of optimizing it", () => {
+		expect(shouldKeepGifOriginal(writeTemp("wave.gif", REAL_GIF))).toBe(true);
+	});
+
+	it("keeps an upper-case .GIF original", () => {
+		expect(shouldKeepGifOriginal(writeTemp("wave.GIF", REAL_GIF))).toBe(true);
+	});
+
+	it("keeps a .gif reference that carries a query string", () => {
+		const file = writeTemp("wave.gif", REAL_GIF);
+		expect(shouldKeepGifOriginal(`${file}?v=2`)).toBe(true);
+	});
+
+	it("keeps GIF content stored under a non-GIF extension", () => {
+		expect(shouldKeepGifOriginal(writeTemp("wave.png", REAL_GIF))).toBe(true);
+		expect(shouldKeepGifOriginal(writeTemp("wave", REAL_GIF))).toBe(true);
+	});
+
+	it("still optimizes non-GIF images", () => {
+		expect(shouldKeepGifOriginal(writeTemp("photo.png", REAL_PNG))).toBe(
+			false,
+		);
+		expect(
+			shouldKeepGifOriginal(writeTemp("photo.jpg", [0xff, 0xd8, 0xff, 0xe0])),
+		).toBe(false);
+		const riff = [...Buffer.from("RIFF"), 0, 0, 0, 0, ...Buffer.from("WEBP")];
+		expect(shouldKeepGifOriginal(writeTemp("photo.webp", riff))).toBe(false);
+		expect(
+			shouldKeepGifOriginal(writeTemp("fake.jpg", Buffer.from("not an image"))),
+		).toBe(false);
+	});
+
+	it("keeps a .gif path even when the file cannot be read", () => {
+		expect(shouldKeepGifOriginal("/nonexistent/wave.gif")).toBe(true);
+		expect(shouldKeepGifOriginal("/nonexistent/wave.jpg")).toBe(false);
 	});
 });

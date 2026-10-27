@@ -11,6 +11,25 @@ try {
 }
 
 /**
+ * Read the first `length` bytes of a file, or null when it cannot be read.
+ * Every probe below starts by sniffing magic bytes, so they all share this.
+ */
+function readHeader(filePath, length) {
+	try {
+		const fd = fs.openSync(filePath, "r");
+		try {
+			const header = Buffer.alloc(length);
+			fs.readSync(fd, header, 0, length, 0);
+			return header;
+		} finally {
+			fs.closeSync(fd);
+		}
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Check whether a file's actual content is an image format the sharp-based
  * optimization pipeline can decode, by sniffing magic bytes. Extensions
  * lie — e.g. iPhone HEIC photos renamed to .jpg — and feeding sharp an
@@ -19,14 +38,9 @@ try {
  * leave the original <img> untouched.
  */
 function isTransformableImage(filePath) {
-	let header;
+	const header = readHeader(filePath, 16);
 
-	try {
-		const fd = fs.openSync(filePath, "r");
-		header = Buffer.alloc(16);
-		fs.readSync(fd, header, 0, 16, 0);
-		fs.closeSync(fd);
-	} catch {
+	if (!header) {
 		return false;
 	}
 
@@ -115,4 +129,57 @@ async function isDecodableImage(filePath) {
 	return probe;
 }
 
-module.exports = { isTransformableImage, isDecodableImage };
+/**
+ * Strip a URL query string and fragment from an image reference, so the
+ * extension checks below look at the path only: "/img/anim.gif?v=2" and
+ * "/img/anim.gif#top" both point at the same file.
+ */
+function pathOnly(ref) {
+	if (typeof ref !== "string") {
+		return "";
+	}
+
+	return ref.split("#")[0].split("?")[0].trim();
+}
+
+/**
+ * Case-insensitive, query/fragment-safe test for a ".gif" reference or path.
+ */
+function isGifReference(ref) {
+	return /\.gif$/i.test(pathOnly(ref));
+}
+
+/**
+ * Check whether an image must be published as its original file instead of
+ * going through the WebP/JPEG optimizer.
+ *
+ * Every format the optimizer emits is a single still frame, so optimizing an
+ * animated GIF freezes it at frame one — the animation is silently lost.
+ * GIFs therefore keep their original file and <img> tag.
+ *
+ * The extension decides first, so the answer holds for unreadable files and
+ * for any letter case; the magic bytes then catch GIFs stored under a
+ * misleading or missing extension.
+ */
+function shouldKeepGifOriginal(filePath) {
+	if (isGifReference(filePath)) {
+		return true;
+	}
+
+	const header = readHeader(filePath, 6);
+
+	if (!header) {
+		return false;
+	}
+
+	const ascii = header.toString("latin1");
+
+	return ascii === "GIF87a" || ascii === "GIF89a";
+}
+
+module.exports = {
+	isTransformableImage,
+	isDecodableImage,
+	isGifReference,
+	shouldKeepGifOriginal,
+};

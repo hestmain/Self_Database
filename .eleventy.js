@@ -114,7 +114,7 @@ const pluginLoader = require("./src/helpers/pluginLoader");
 const { basesPlugin } = require("./src/helpers/basesPlugin");
 
 const Image = require("@11ty/eleventy-img");
-const { isDecodableImage } = require("./src/helpers/imageFormat.js");
+const { isDecodableImage, shouldKeepGifOriginal } = require("./src/helpers/imageFormat.js");
 
 // Build containers have few CPUs and little memory; the default queue
 // concurrency of 10 holds ~10 decoded images in memory at once without
@@ -666,13 +666,24 @@ module.exports = function(eleventyConfig) {
     for (const imageTag of parsed.querySelectorAll(".cm-s-obsidian img")) {
       const src = imageTag.getAttribute("src");
       if (src && src.startsWith("/") && !src.endsWith(".svg")) {
+        const localPath = "./src/site" + decodeURI(src);
+
+        // GIFs keep their original file and <img> tag: the optimizer only
+        // emits still frames, so replacing an animated GIF with static
+        // WebP/JPEG would freeze the animation at frame one.
+        if (shouldKeepGifOriginal(localPath)) {
+          imageTag.setAttribute("loading", "lazy");
+          imageTag.setAttribute("decoding", "async");
+          continue;
+        }
+
         // Files sharp can't decode (e.g. HEIC or a truncated AVIF renamed
         // to .jpg) keep their original <img> tag instead of a <picture>
         // pointing at optimized files that will never exist. This must be
         // a real decode probe, not just a header check: feeding an
         // undecodable file to eleventy-img fails the whole build via
         // unhandled promise rejections in its internals.
-        if (!(await isDecodableImage("./src/site" + decodeURI(src)))) {
+        if (!(await isDecodableImage(localPath))) {
           continue;
         }
         const cls = imageTag.classList.value;
@@ -681,7 +692,7 @@ module.exports = function(eleventyConfig) {
 
         try {
           const meta = transformImage(
-            "./src/site" + decodeURI(imageTag.getAttribute("src")),
+            localPath,
             cls.toString(),
             alt,
             ["(max-width: 480px)", "(max-width: 1024px)"]
